@@ -6,11 +6,9 @@ if [ -z "$1" ]; then
     exit
 fi
 DOMAIN=$1
-echo 'DPkg::options { "--force-confdef"; "--force-confold"; }' > /etc/apt/apt.conf.d/local
 apt update && apt upgrade -y
 apt install -y php default-mysql-server php-mysql php-fpm apache2 certbot python3-certbot-apache speedtest-cli
 cd /etc/ssh/sshd_config.d
-rm -f *
 echo "PasswordAuthentication no" > 000-default.conf
 systemctl restart sshd
 PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
@@ -42,7 +40,6 @@ make-site() {
     cp html/* $NAME/public_html
     a2ensite $NAME
     systemctl reload apache2
-    cd /etc/apache2/sites-available
     certbot --apache -d $NAME
 }' >> ~/.bashrc
 source ~/.bashrc
