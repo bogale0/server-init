@@ -1,15 +1,14 @@
 #!/bin/bash
-set -e
 START_PATH=$PWD
 if [ -z "$1" ]; then
     echo "Введите домен"
     exit
 fi
 DOMAIN=$1
+echo "DOMAIN=$DOMAIN" >> ~/.bashrc
 apt update && apt upgrade -y
 apt install -y php default-mysql-server php-mysql php-fpm apache2 certbot python3-certbot-apache speedtest-cli
-cd /etc/ssh/sshd_config.d
-echo "PasswordAuthentication no" > 000-default.conf
+echo "PasswordAuthentication no" > /etc/ssh/sshd_config.d/000-default.conf
 systemctl restart sshd
 PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 a2dismod php$PHP_VERSION mpm_prefork
@@ -19,30 +18,9 @@ a2dissite 000-default.conf
 sed -i "s/Indexes FollowSymLinks/-Indexes/" /etc/apache2/apache2.conf
 systemctl restart apache2
 certbot register --agree-tos --no-eff-email -m bogoduhovaleksej0@gmail.com
-echo 'alias www="cd /var/www"
-make-site() {
-    local dmn='$DOMAIN'
-    cd /etc/apache2/sites-available
-    local NAME=$dmn
-    if [ -n "$1" ]; then
-        NAME=$1.$NAME
-    fi
-    if [ -e "$NAME.conf" ]; then
-        echo "Сайт уже существует"
-        return 1
-    fi
-    cp 000-default.conf $NAME.conf
-    sed -i "s/#ServerName www.example.com/ServerName $NAME/" $NAME.conf
-    sed -i "s/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www\/$NAME\/public_html/" $NAME.conf
-    cd /var/www
-    mkdir $NAME
-    mkdir $NAME/public_html
-    cp html/* $NAME/public_html
-    a2ensite $NAME
-    systemctl reload apache2
-    certbot --apache -d $NAME
-}' >> ~/.bashrc
-source ~/.bashrc
+cat bashrc >> ~/.bashrc
+source bashrc
+rm bashrc
 make-site
 make-site www
 speedtest-cli
