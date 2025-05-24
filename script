@@ -6,6 +6,9 @@ if [ -z "$1" ]; then
 fi
 DOMAIN=$1
 echo "DOMAIN=$DOMAIN" >> ~/.bashrc
+cat bashrc >> ~/.bashrc
+source bashrc
+rm bashrc
 apt update && apt upgrade -y
 apt install -y php default-mysql-server php-mysql php-fpm apache2 certbot python3-certbot-apache speedtest-cli
 echo "PasswordAuthentication no" > /etc/ssh/sshd_config.d/000-default.conf
@@ -15,13 +18,16 @@ a2dismod php$PHP_VERSION mpm_prefork
 a2enmod mpm_event proxy_fcgi http2
 a2enconf php$PHP_VERSION-fpm
 a2dissite 000-default.conf
-sed -i "s/Indexes FollowSymLinks/-Indexes/" /etc/apache2/apache2.conf
+cd /etc/apache2
+sed -i "s/Indexes FollowSymLinks/-Indexes/" apache2.conf
+cd sites-available
+cp 000-default.conf $DOMAIN.conf
+sed -i "s/#ServerName www.example.com/ServerName $DOMAIN/" $DOMAIN.conf
+sed -i "s/DocumentRoot \/var\/www\/html/Redirect permanent \/ http:\/\/www.$DOMAIN/" $DOMAIN.conf
+a2ensite $DOMAIN
 systemctl restart apache2
 certbot register --agree-tos --no-eff-email -m bogoduhovaleksej0@gmail.com
-cat bashrc >> ~/.bashrc
-source bashrc
-rm bashrc
-make-site
+certbot --apache -d $DOMAIN
 make-site www
 speedtest-cli
 cd $START_PATH
