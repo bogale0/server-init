@@ -1,23 +1,25 @@
 #!/bin/bash
 START_PATH=$PWD
-if [ -z "$1" ]; then
-    echo "Введите домен"
-    exit
-fi
-DOMAIN=$1
+read -p "Введите домен: " DOMAIN
 echo "DOMAIN=$DOMAIN" >> ~/.bashrc
 cat bashrc >> ~/.bashrc
 source bashrc
 rm bashrc
 apt update && apt upgrade -y
-apt install -y php default-mysql-server php-mysql php-fpm apache2 certbot python3-certbot-apache speedtest-cli
-echo "PasswordAuthentication no" > /etc/ssh/sshd_config.d/000-default.conf
+apt install -y php php-fpm apache2 certbot python3-certbot-apache mariadb-server php-mysql mariadb-client postfix dovecot-imapd speedtest-cli
+
+cd /etc/ssh
+sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/" sshd_config
+sed -i "s/#Port 22/Port 17779/" sshd_config
+rm -f sshd_config.d/*
 systemctl restart sshd
+
 PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 a2dismod php$PHP_VERSION mpm_prefork
 a2enmod mpm_event proxy_fcgi http2
 a2enconf php$PHP_VERSION-fpm
 a2dissite 000-default.conf
+
 cd /etc/apache2
 sed -i "s/Indexes FollowSymLinks/-Indexes/" apache2.conf
 cd sites-available
@@ -26,9 +28,22 @@ sed -i "s/#ServerName www.example.com/ServerName $DOMAIN/" $DOMAIN.conf
 sed -i "s/DocumentRoot \/var\/www\/html/Redirect permanent \/ http:\/\/www.$DOMAIN/" $DOMAIN.conf
 a2ensite $DOMAIN
 systemctl restart apache2
-certbot register --agree-tos --no-eff-email -m bogoduhovaleksej0@gmail.com
+
+certbot register --agree-tos --no-eff-email -m postmaster@$DOMAIN
 certbot --apache -d $DOMAIN
 make-site www
+mariadb-secure-installation
+
+echo "local_recipient_maps = hash:/etc/postfix/valid_recipients
+home_mailbox = Maildir/" >> /etc/postfix/main.cf
+read -s -p "Пароль для postmaster: " PASSWORD
+echo
+mailuseradd postmaster $PASSWORD
+sed -i "/^postmaster:/d" /etc/aliases
+newaliases
+sed -i "s/^mail_location = mbox:~\/mail:INBOX=\/var\/mail\/%u/mail_location = maildir:~\/Maildir/" /etc/dovecot/conf.d/10-mail.conf
+systemctl restart postfix dovecot
+
 speedtest-cli
 cd $START_PATH
 rm $0
