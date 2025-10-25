@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 START_PATH=$PWD
 read -p "Введите домен: " DOMAIN
 echo "DOMAIN=$DOMAIN" >> ~/.bashrc
@@ -25,24 +25,35 @@ sed -i "s/Indexes FollowSymLinks/-Indexes/" apache2.conf
 cd sites-available
 cp 000-default.conf $DOMAIN.conf
 sed -i "s/#ServerName www.example.com/ServerName $DOMAIN/" $DOMAIN.conf
-sed -i "s/DocumentRoot \/var\/www\/html/Redirect permanent \/ http:\/\/www.$DOMAIN/" $DOMAIN.conf
+sed -i "s|DocumentRoot /var/www/html|Redirect permanent / http://www.$DOMAIN|" $DOMAIN.conf
 a2ensite $DOMAIN
 systemctl restart apache2
 
 certbot register --agree-tos --no-eff-email -m postmaster@$DOMAIN
 certbot --apache -d $DOMAIN
 make-site www
+make-site mail
 mariadb-secure-installation
 
-echo "local_recipient_maps = hash:/etc/postfix/valid_recipients
-home_mailbox = Maildir/" >> /etc/postfix/main.cf
+cd /etc/postfix
+sed -i "s|^smtpd_tls_cert_file=.*$|smtpd_tls_cert_file=/etc/letsencrypt/live/$DOMAIN/fullchain.pem|" main.cf
+sed -i "s|^smtpd_tls_key_file=.*$|smtpd_tls_key_file=/etc/letsencrypt/live/$DOMAIN/privkey.pem|" main.cf
+echo "smtpd_use_tls = yes
+local_recipient_maps = hash:/etc/postfix/valid_recipients
+home_mailbox = Maildir/" >> main.cf
 read -s -p "Пароль для postmaster: " PASSWORD
 echo
 mailuseradd postmaster $PASSWORD
 sed -i "/^postmaster:/d" /etc/aliases
 newaliases
-sed -i "s/^mail_location = mbox:~\/mail:INBOX=\/var\/mail\/%u/mail_location = maildir:~\/Maildir/" /etc/dovecot/conf.d/10-mail.conf
-systemctl restart postfix dovecot
+systemctl restart postfix
+
+cd /etc/dovecot/conf.d
+sed -i "s/^#auth_username_format = .*$/auth_username_format = %n/" 10-auth.conf
+sed -i "s|^mail_location = .*$|mail_location = maildir:~/Maildir|" 10-mail.conf
+sed -i "s|^ssl_cert = .*$|ssl_cert = </etc/letsencrypt/live/$DOMAIN/fullchain.pem|" 10-ssl.conf
+sed -i "s|^ssl_key = .*$|ssl_key = </etc/letsencrypt/live/$DOMAIN/privkey.pem|" 10-ssl.conf
+systemctl restart dovecot
 
 speedtest-cli
 cd $START_PATH
