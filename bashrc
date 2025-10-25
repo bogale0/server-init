@@ -15,6 +15,7 @@ make-site() {
     systemctl reload apache2
     certbot --apache --expand -d $(ls /var/www | grep $DOMAIN | tr "\n" ",")$DOMAIN
 }
+
 mariadb-create-user() {
     local name="$1"
     local password="$2"
@@ -39,6 +40,7 @@ mariadb-create-user() {
     mariadb -e 'grant '"$privileges"' on `'"$name"'`.* to `'"$name"'`@localhost;'
     echo "$name: '$password'" >> ~/mariadb.user
 }
+
 mailuseradd() {
     (set -e
     USERNAME=$1
@@ -57,6 +59,7 @@ mailuseradd() {
     echo "$USERNAME@$DOMAIN OK" >> valid_recipients
     postmap valid_recipients)
 }
+
 mailuserdel() {
     (set -e
     USERNAME=$1
