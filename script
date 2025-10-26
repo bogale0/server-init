@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-START_PATH=$PWD
-read -p "Введите домен: " DOMAIN
+read -p "Введите домен: " DOMAIN || exit
 echo "DOMAIN=$DOMAIN" >> ~/.bashrc
+cd include
 cat bashrc >> ~/.bashrc
 source bashrc
 rm bashrc
-apt update && apt upgrade -y
-
+update
+source ssh.sh
+source apache.sh
+source email.sh
 apt install speedtest-cli
 speedtest-cli
 cd $START_PATH

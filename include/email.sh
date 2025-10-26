@@ -1,3 +1,4 @@
+START_PATH=$PWD
 apt install -y postfix
 cd /etc/postfix
 sed -i "s|^smtpd_tls_cert_file=.*$|smtpd_tls_cert_file=/etc/letsencrypt/live/$DOMAIN/fullchain.pem|" main.cf
@@ -19,3 +20,5 @@ sed -i "s|^mail_location = .*$|mail_location = maildir:~/Maildir|" 10-mail.conf
 sed -i "s|^ssl_cert = .*$|ssl_cert = </etc/letsencrypt/live/$DOMAIN/fullchain.pem|" 10-ssl.conf
 sed -i "s|^ssl_key = .*$|ssl_key = </etc/letsencrypt/live/$DOMAIN/privkey.pem|" 10-ssl.conf
 systemctl restart dovecot
+cd $START_PATH
+rm email.sh

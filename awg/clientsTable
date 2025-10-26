@@ -1,0 +1,34 @@
+[
+    {
+        "clientId": "JcIj1C7gY2F6MwPAZHp0MeyaITeDcxbdsrGZQ1egJCs=",
+        "userData": {
+            "allowedIps": "10.8.1.2/32",
+            "clientName": "Admin [Linux Mint 21.3]",
+            "creationDate": "Sun Oct 26 03:05:10 2025"
+        }
+    },
+    {
+        "clientId": "J3uJ7MYjVmvx6og2v2IBCT1KVrkHzy5ESZW2PEzw5w4=",
+        "userData": {
+            "allowedIps": "10.8.1.3/32",
+            "clientName": "Admin [Android 13 (13.0)]",
+            "creationDate": "Sun Oct 26 03:15:36 2025",
+        }
+    },
+    {
+        "clientId": "vfdJiMCd7j0MFEsPu3erOnoS0oWzCkd2kaVi13eD/Tg=",
+        "userData": {
+            "allowedIps": "10.8.1.4/32",
+            "clientName": "Admin [Windows 11 Version 25H2]",
+            "creationDate": "Sun Oct 26 03:20:21 2025"
+        }
+    },
+    {
+        "clientId": "D74okLVSMxiXZ3T8P66CiPhDNckk8INxiIIxbaWxUS4=",
+        "userData": {
+            "allowedIps": "10.8.1.5/32",
+            "clientName": "Alexander",
+            "creationDate": "Mon Sep 22 04:30:11 2025",
+        }
+    }
+]

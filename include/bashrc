@@ -1,3 +1,11 @@
+update() {
+    apt update
+    apt upgrade -y
+    apt autopurge -y
+    journalctl --vacuum-time=7d
+    apt clean
+}
+
 make-site() {
     local name=$1.$DOMAIN
     cd /var/www

@@ -1,4 +1,5 @@
-apt install -y apache2 php php-fpm certbot python3-certbot-apache mariadb-server php-mysql mariadb-client
+START_PATH=$PWD
+apt install -y apache2 php php-fpm php-mysql certbot python3-certbot-apache mariadb-server mariadb-client
 PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 a2dismod php$PHP_VERSION mpm_prefork
 a2enmod mpm_event proxy_fcgi http2
@@ -19,3 +20,5 @@ certbot --apache -d $DOMAIN
 make-site www
 make-site mail
 mariadb-secure-installation
+cd $START_PATH
+rm apache.sh
