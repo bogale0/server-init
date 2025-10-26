@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+tar czf init.tar.gz awg include script.sh

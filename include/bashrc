@@ -50,37 +50,35 @@ mariadb-create-user() {
 }
 
 mailuseradd() {
-    (set -e
     USERNAME=$1
     PASSWORD=$2
     if [ -z "$USERNAME" -o -z "$PASSWORD" ]; then
         echo "Пустой аргумент"
-        false
+        return 1
     fi
     if id "$USERNAME" &> /dev/null; then
         echo "Пользователь существует"
-        false
+        return 1
     fi
     useradd -m -s /usr/sbin/nologin "$USERNAME"
     echo "$USERNAME:$PASSWORD" | chpasswd
     cd /etc/postfix
     echo "$USERNAME@$DOMAIN OK" >> valid_recipients
-    postmap valid_recipients)
+    postmap valid_recipients
 }
 
 mailuserdel() {
-    (set -e
     USERNAME=$1
     if [ -z "$USERNAME" ]; then
         echo "Пустой аргумент"
-        false
+        return 1
     fi
     cd /etc/postfix
     if ! grep -q "^$USERNAME@$DOMAIN" valid_recipients; then
         echo "Пользователя не существует"
-        false
+        return 1
     fi
     userdel -r "$USERNAME"
     sed -i "/^$USERNAME@$DOMAIN/d" valid_recipients
-    postmap valid_recipients)
+    postmap valid_recipients
 }
