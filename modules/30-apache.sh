@@ -9,13 +9,12 @@ cd /etc/apache2
 sed -i "s/Indexes FollowSymLinks/-Indexes/" apache2.conf
 cd sites-available
 cp 000-default.conf $DOMAIN.conf
-sed -i "s/#ServerName www.example.com/ServerName $DOMAIN/" $DOMAIN.conf
-sed -i "s|DocumentRoot /var/www/html|Redirect permanent / http://www.$DOMAIN|" $DOMAIN.conf
+sed -i "s/^#ServerName .*$/ServerName $DOMAIN/" $DOMAIN.conf
+sed -i "s|^DocumentRoot .*$|Redirect permanent / http://www.$DOMAIN|" $DOMAIN.conf
 a2ensite $DOMAIN
 systemctl restart apache2
 
-certbot register --agree-tos -m postmaster@$DOMAIN
+certbot register --agree-tos --eff-email -m postmaster@$DOMAIN
 certbot --apache -d $DOMAIN
 make-site www
-make-site mail
 mariadb-secure-installation

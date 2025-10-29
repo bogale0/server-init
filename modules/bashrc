@@ -1,0 +1,78 @@
+update() {
+    apt update
+    apt upgrade -y
+    apt autopurge -y
+    journalctl --vacuum-time=7d
+    apt clean
+}
+
+make-site() {
+    local NAME=$1.$DOMAIN
+    cd /var/www
+    if [ -e "$NAME" -o -z "$1" ]; then
+        echo "Сайт уже существует"
+        return 1
+    fi
+    mkdir $NAME
+    cp -r html $NAME/public_html
+    cd /etc/apache2/sites-available
+    cp 000-default.conf $NAME.conf
+    sed -i "s/^#ServerName .*$/ServerName $NAME/" $NAME.conf
+    sed -i "s|^DocumentRoot .*$|DocumentRoot /var/www/$NAME/public_html|" $NAME.conf
+    a2ensite $NAME
+    systemctl reload apache2
+    certbot --apache --expand -d $(ls /var/www | grep $DOMAIN | tr "\n" ",")$DOMAIN
+}
+
+mariadb-create-user() {
+    local NAME="$1"
+    local PASSWORD="$2"
+    local PRIVILEGES
+    case "$3" in
+        "crud")
+        PRIVILEGES="select, insert, update, delete"
+        ;;
+        "def")
+        PRIVILEGES="select, insert, update, delete, create, drop, index, alter"
+        ;;
+        *)
+        echo "usage: mariadb-create-user <name> <password> <privileges>"
+        echo "privileges list: crud, def"
+        return 1
+        ;;
+    esac
+    mariadb -e 'drop database if exists `'$NAME'`'
+    mariadb -e 'create database `'$NAME'`'
+    mariadb -e 'drop user if exists `'$NAME'`@localhost'
+    mariadb -e 'create user `'$NAME'`@localhost identified by '\'$PASSWORD\'
+    mariadb -e 'grant '$PRIVILEGES' on `'$NAME'`.* to `'$NAME'`@localhost'
+    echo "$NAME: $PASSWORD" >> ~/mariadb.user
+}
+
+mailuseradd() {
+    if [ -z "$2" ]; then
+        echo "Пустой аргумент"
+        return 1
+    fi
+    local USERNAME="mail-$1"
+    local PASSWORD="$2"
+    if id "$USERNAME" &> /dev/null; then
+        echo "Пользователь существует"
+    else
+        useradd -m -s /usr/sbin/nologin "$USERNAME"
+        echo "$USERNAME:$PASSWORD" | chpasswd
+    fi
+}
+
+mailuserdel() {
+    if [ -z "$1" ]; then
+        echo "Пустой аргумент"
+        return 1
+    fi
+    local USERNAME="mail-$1"
+    if id "$USERNAME" &> /dev/null; then
+        userdel -r "$USERNAME"
+    else
+        echo "Пользователя не существует"
+    fi
+}
