@@ -10,15 +10,15 @@ make-site() {
     local NAME=$1.$DOMAIN
     cd /var/www
     if [ -e "$NAME" -o -z "$1" ]; then
-        echo "Сайт уже существует"
+        echo "Site exists"
         return 1
     fi
     mkdir $NAME
     cp -r html $NAME/public_html
     cd /etc/apache2/sites-available
     cp 000-default.conf $NAME.conf
-    sed -i "s/^#ServerName .*$/ServerName $NAME/" $NAME.conf
-    sed -i "s|^DocumentRoot .*$|DocumentRoot /var/www/$NAME/public_html|" $NAME.conf
+    sed -i "s/#ServerName .*/ServerName $NAME/" $NAME.conf
+    sed -i "s|DocumentRoot .*|DocumentRoot /var/www/$NAME/public_html|" $NAME.conf
     a2ensite $NAME
     systemctl reload apache2
     certbot --apache --expand -d $(ls /var/www | grep $DOMAIN | tr "\n" ",")$DOMAIN
@@ -47,32 +47,4 @@ mariadb-create-user() {
     mariadb -e 'create user `'$NAME'`@localhost identified by '\'$PASSWORD\'
     mariadb -e 'grant '$PRIVILEGES' on `'$NAME'`.* to `'$NAME'`@localhost'
     echo "$NAME: $PASSWORD" >> ~/mariadb.user
-}
-
-mailuseradd() {
-    if [ -z "$2" ]; then
-        echo "Пустой аргумент"
-        return 1
-    fi
-    local USERNAME="mail-$1"
-    local PASSWORD="$2"
-    if id "$USERNAME" &> /dev/null; then
-        echo "Пользователь существует"
-    else
-        useradd -m -s /usr/sbin/nologin "$USERNAME"
-        echo "$USERNAME:$PASSWORD" | chpasswd
-    fi
-}
-
-mailuserdel() {
-    if [ -z "$1" ]; then
-        echo "Пустой аргумент"
-        return 1
-    fi
-    local USERNAME="mail-$1"
-    if id "$USERNAME" &> /dev/null; then
-        userdel -r "$USERNAME"
-    else
-        echo "Пользователя не существует"
-    fi
 }

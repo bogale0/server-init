@@ -9,8 +9,8 @@ if [[ ! -d modules || -z "$(ls modules/$MODULES)" ]]; then
 fi
 cd modules
 for module in $(ls $MODULES); do
-    read -p "Install module ${module:3:-3}? y/N " result
-    if [ "$result" = "y" ]; then
+    read -p "Install module ${module:3:-3}? Y/n " result
+    if [ "$result" != n ]; then
         START_PATH=$PWD
         source $module
         cd $START_PATH

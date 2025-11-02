@@ -9,8 +9,8 @@ cd /etc/apache2
 sed -i "s/Indexes FollowSymLinks/-Indexes/" apache2.conf
 cd sites-available
 cp 000-default.conf $DOMAIN.conf
-sed -i "s/^#ServerName .*$/ServerName $DOMAIN/" $DOMAIN.conf
-sed -i "s|^DocumentRoot .*$|Redirect permanent / http://www.$DOMAIN|" $DOMAIN.conf
+sed -i "s/#ServerName .*/ServerName $DOMAIN/" $DOMAIN.conf
+sed -i "s|DocumentRoot .*|Redirect permanent / http://www.$DOMAIN|" $DOMAIN.conf
 a2ensite $DOMAIN
 systemctl restart apache2
 

@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-tar czf init.tar.gz awg include script.sh
-scp init.tar.gz $CONNECTION_SSH:
-rm init.tar.gz
