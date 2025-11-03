@@ -1,10 +1,12 @@
-tar czf init.tar.gz backup modules script.sh
-read -p "Enter domain (default: $DOMAIN): " CONNECTION
+read -p "Enter domain name (default: '$DOMAIN'): " CONNECTION
 if [ -z "$CONNECTION" ]; then
-    CONNECTION=$CONNECTION_SSH
+    DOMAIN_NAME=$DOMAIN
 else
-    CONNECTION=root@$CONNECTION
+    DOMAIN_NAME=$CONNECTION
 fi
+CONNECTION=root@$DOMAIN_NAME
+printf "\nDOMAIN=$DOMAIN_NAME\n\n" > backup/domain
+tar czf init.tar.gz backup modules script.sh
 scp init.tar.gz $CONNECTION:
-rm init.tar.gz
+rm init.tar.gz backup/domain
 ssh $CONNECTION

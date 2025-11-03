@@ -17,8 +17,8 @@ make-site() {
     cp -r html $NAME/public_html
     cd /etc/apache2/sites-available
     cp 000-default.conf $NAME.conf
-    sed -i "s/#ServerName .*/ServerName $NAME/" $NAME.conf
-    sed -i "s|DocumentRoot .*|DocumentRoot /var/www/$NAME/public_html|" $NAME.conf
+    sed -i -e "s/#\(ServerName\) .*/\1 $NAME/" \
+    -e "s|\(DocumentRoot\) .*|\1 /var/www/$NAME/public_html|" $NAME.conf
     a2ensite $NAME
     systemctl reload apache2
     certbot --apache --expand -d $(ls /var/www | grep $DOMAIN | tr "\n" ",")$DOMAIN
@@ -47,4 +47,17 @@ mariadb-create-user() {
     mariadb -e 'create user `'$NAME'`@localhost identified by '\'$PASSWORD\'
     mariadb -e 'grant '$PRIVILEGES' on `'$NAME'`.* to `'$NAME'`@localhost'
     echo "$NAME: $PASSWORD" >> ~/mariadb.user
+}
+
+mailuseradd() {
+    USERNAME="$1"
+    PASSWORD="$2"
+    cd /etc/postfix
+    echo "$USERNAME@$DOMAIN $USERNAME/" >> users
+    postmap users
+    printf $USERNAME:$(doveadm pw -s SHA512-CRYPT -p "$PASSWORD"):$(id vmail -u):$(id vmail -g) >> /etc/dovecot/users
+}
+
+mailuserdel() {
+    
 }

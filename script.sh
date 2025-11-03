@@ -1,19 +1,15 @@
 if [ -z "$DOMAIN" ]; then
-    read -p "Enter domain name: " DOMAIN
-    printf "\nDOMAIN=$DOMAIN\n\n" >> ~/.bashrc
+    cd backup
+    source domain
+    cat domain >> ~/.bashrc
+    rm domain ~/init.tar.gz
 fi
-MODULES=[0-9][0-9]-*.sh
-if [[ ! -d modules || -z "$(ls modules/$MODULES)" ]]; then
-    rm -rf modules script.sh
-    exit
-fi
-cd modules
-for module in $(ls $MODULES); do
-    read -p "Install module ${module:3:-3}? Y/n " result
+cd ~/modules
+for module in $(ls [0-9][0-9]-*.sh); do
+    read -p "Install module ${module:3:-3}? [Y/n] " result
     if [ "$result" != n ]; then
-        START_PATH=$PWD
         source $module
-        cd $START_PATH
+        cd ~/modules
         rm $module
     fi
 done
