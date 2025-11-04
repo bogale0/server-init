@@ -45,19 +45,6 @@ mariadb-create-user() {
     mariadb -e 'create database `'$NAME'`'
     mariadb -e 'drop user if exists `'$NAME'`@localhost'
     mariadb -e 'create user `'$NAME'`@localhost identified by '\'$PASSWORD\'
-    mariadb -e 'grant '$PRIVILEGES' on `'$NAME'`.* to `'$NAME'`@localhost'
+    mariadb -e 'grant '"$PRIVILEGES"' on `'$NAME'`.* to `'$NAME'`@localhost'
     echo "$NAME: $PASSWORD" >> ~/mariadb.user
-}
-
-mailuseradd() {
-    USERNAME="$1"
-    PASSWORD="$2"
-    cd /etc/postfix
-    echo "$USERNAME@$DOMAIN $USERNAME/" >> users
-    postmap users
-    printf $USERNAME:$(doveadm pw -s SHA512-CRYPT -p "$PASSWORD"):$(id vmail -u):$(id vmail -g) >> /etc/dovecot/users
-}
-
-mailuserdel() {
-    
 }

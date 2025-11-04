@@ -6,7 +6,7 @@ apt install -y speedtest-cli
 speedtest
 
 cd /etc/ssh
-sed -i "s/#\(PasswordAuthentication\) yes/\1 no/" sshd_config
+sed -i "s/#\(PasswordAuthentication\).*/\1 no/" sshd_config
 rm -f sshd_config.d/*
 systemctl restart sshd
 

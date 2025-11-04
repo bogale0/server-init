@@ -1,4 +1,0 @@
-cd /etc/postfix
-echo "$USERNAME@$DOMAIN $USERNAME/" > users
-postmap users
-printf $USERNAME:$(doveadm pw -s SHA512-CRYPT -p "$PASSWORD"):$(id vmail -u):$(id vmail -g) > /etc/dovecot/users
