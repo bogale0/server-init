@@ -1,7 +1,7 @@
-if [ -z "$DOMAIN" ]; then
+if [ -z $DOMAIN ]; then
     cd backup
-    source domain
     cat domain >> ~/.bashrc
+    source domain
     rm domain ~/init.tar.gz
 fi
 cd ~/modules

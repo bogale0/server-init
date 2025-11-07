@@ -1,3 +1,7 @@
+password-gen() {
+    head -c 15 /dev/urandom | base64 | tr +/ -_
+}
+
 update() {
     apt update
     apt upgrade -y
@@ -7,44 +11,56 @@ update() {
 }
 
 make-site() {
-    local NAME=$1.$DOMAIN
-    cd /var/www
-    if [ -e "$NAME" -o -z "$1" ]; then
+    local NAME=$1
+    cd /etc/apache2/sites-available
+    if [ -z $NAME -o -e $NAME.conf ]; then
         echo "Site exists"
         return 1
     fi
-    mkdir $NAME
-    cp -r html $NAME/public_html
-    cd /etc/apache2/sites-available
     cp 000-default.conf $NAME.conf
-    sed -i -e "s/#\(ServerName\) .*/\1 $NAME/" \
-    -e "s|\(DocumentRoot\) .*|\1 /var/www/$NAME/public_html|" $NAME.conf
+    sed -i -e "s/#\(ServerName\).*/\1 $NAME/" \
+    -e "s|\(DocumentRoot\).*|\1 /var/www/$NAME/public_html|" $NAME.conf
     a2ensite $NAME
-    systemctl reload apache2
-    certbot --apache --expand -d $(ls /var/www | grep $DOMAIN | tr "\n" ",")$DOMAIN
+    if [ "$2" != empty ]; then
+        cd /var/www
+        mkdir $NAME
+        cp -r html $NAME/public_html
+    fi
+    ssl-cert-add $NAME
+}
+
+ssl-cert-add() {
+    local NAME=$1
+    cd /etc/apache2
+    if [ -z $NAME ] || grep ^$NAME$ certs >> /dev/null; then
+        echo "Domain exists"
+        return 1
+    fi
+    printf \\n$NAME >> certs
+}
+
+ssl-cert-update() {
+    certbot $1 --apache --expand -d $(cat /etc/apache2/certs | tr \\n ,)
 }
 
 mariadb-create-user() {
-    local NAME="$1"
-    local PASSWORD="$2"
-    local PRIVILEGES
-    case "$3" in
-        "crud")
-        PRIVILEGES="select, insert, update, delete"
-        ;;
-        "def")
-        PRIVILEGES="select, insert, update, delete, create, drop, index, alter"
-        ;;
-        *)
-        echo "usage: mariadb-create-user <name> <password> <privileges>"
-        echo "privileges list: crud, def"
-        return 1
-        ;;
-    esac
-    mariadb -e 'drop database if exists `'$NAME'`'
-    mariadb -e 'create database `'$NAME'`'
-    mariadb -e 'drop user if exists `'$NAME'`@localhost'
-    mariadb -e 'create user `'$NAME'`@localhost identified by '\'$PASSWORD\'
-    mariadb -e 'grant '"$PRIVILEGES"' on `'$NAME'`.* to `'$NAME'`@localhost'
-    echo "$NAME: $PASSWORD" >> ~/mariadb.user
+    local NAME=$1
+    local PASSWORD=$(password-gen)
+    echo "$PASSWORD"
+    mariadb -e "create database if not exists $NAME;
+    create user $NAME@localhost identified by '$PASSWORD';
+    grant select, insert, update, delete on $NAME.* to $NAME@localhost;"
+}
+
+mail-add-domain() {
+    mariadb -e "insert into mail.domains values (null, '$1')"
+}
+
+mail-add-user() {
+    USERNAME=${1%@*}
+    DOMAINNAME=${1#*@}
+    PASSWORD=$(password-gen)
+    echo $PASSWORD
+    PASSWORD=$(doveadm pw -p $PASSWORD -s BLF-CRYPT)
+    mariadb -e "insert into mail.users values (null, '$USERNAME', '${PASSWORD#*\}}', (select id from mail.domains where domain = '$DOMAINNAME'))"
 }

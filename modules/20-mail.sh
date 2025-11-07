@@ -4,10 +4,10 @@ useradd -d $VMAIL_DIR -m -s /usr/sbin/nologin vmail
 chmod 700 $VMAIL_DIR
 VMAIL_UID=$(id vmail -u)
 VMAIL_GID=$(id vmail -g)
-make-site mail
+ssl-cert-add mail.$DOMAIN
+ssl-cert-update certonly
 CERT_PATH=/etc/letsencrypt/live/$DOMAIN
-read -p "Enter password for mariadb user: " MAIL_PASSWORD
-mariadb-create-user mail $MAIL_PASSWORD crud
+PASSWORD=$(mariadb-create-user mail)
 mariadb -e "
 use mail;
 create table domains (
@@ -18,19 +18,18 @@ create table users (
     id int auto_increment primary key,
     username varchar(190) not null,
     password varchar(255) not null,
-    domain_id int not null,
-    foreign key (domain_id) references domains(id),
-    unique key (username, domain_id)
-);
-insert into domains values (NULL, '$DOMAIN');"
+    domain_id int not null references domains(id) on delete cascade,
+    unique (username, domain_id)
+);"
+mail-add-domain $DOMAIN
 
 cd /etc/postfix
 sed -i -e "s|\(smtpd_tls_cert_file=\).*|\1$CERT_PATH/fullchain.pem|" \
 -e "s|\(smtpd_tls_key_file=\).*|\1$CERT_PATH/privkey.pem|" \
--e "s/\(myhostname =\).*/\1 mail.\$mydomain/" \
--e "s/^\(myorigin =\).*/\1 \$mydomain/" \
+-e "s/\(myhostname =\).*/\1 mail.$DOMAIN/" \
+-e "s/\(myorigin =\).*/\1 localhost/" \
 -e "s/\(mydestination =\).*/\1/" main.cf
-echo "mydomain = ${DOMAIN}
+echo "local_recipient_maps =
 smtpd_use_tls = yes
 virtual_mailbox_base = $VMAIL_DIR
 virtual_mailbox_domains = mysql:/etc/postfix/domains.cf
@@ -40,11 +39,11 @@ virtual_gid_maps = static:$VMAIL_GID" >> main.cf
 echo "hosts = 127.0.0.1
 dbname = mail
 user = mail
-password = $MAIL_PASSWORD" | tee domains.cf users.cf > /dev/null
-chown root:postfix domains.cf users.cf
+password = $PASSWORD" | tee domains.cf users.cf > /dev/null
 chmod 640 domains.cf users.cf
+chown root:postfix domains.cf users.cf
 echo "query = select 'OK' from domains where domain = '%s'" >> domains.cf
-echo "query = select concat(domain, '/', username, '/') from (users inner join domains on domain_id = domains.id) where username = '%u' and domain = '%d'" >> users.cf
+echo "query = select concat(domain, '/', username, '/') from users inner join domains on domain_id = domains.id where username = '%u' and domain = '%d'" >> users.cf
 
 cd /etc/dovecot/conf.d
 sed -i -e "s/\!include.*system/#&/" \
@@ -54,12 +53,9 @@ sed -i -e "s|^\(mail_location =\).*|\1 maildir:~/%d/%n|" \
 -e "s/#\(mail_gid =\).*/\1 $VMAIL_GID/" 10-mail.conf
 sed -i -e "s|\(ssl_cert =\).*|\1 <$CERT_PATH/fullchain.pem|" \
 -e "s|\(ssl_key =\).*|\1 <$CERT_PATH/privkey.pem|" 10-ssl.conf
-cd ..
-#chmod 640 dovecot-sql.conf.ext
-#chown root:dovecot dovecot-sql.conf.ext
 sed -i -e "s/#\(driver =\).*/\1 mysql/" \
--e "s/#\(connect =\).*/\1 host=127.0.0.1 dbname=mail user=mail password=$MAIL_PASSWORD/" \
--e "s/#\(default_pass_scheme =\).*/\1 BLF-CRYPT/" dovecot-sql.conf.ext
+-e "s/#\(connect =\).*/\1 host=127.0.0.1 dbname=mail user=mail password=$PASSWORD/" \
+-e "s/#\(default_pass_scheme =\).*/\1 BLF-CRYPT/" ../dovecot-sql.conf.ext
 echo "password_query = select username, domain, password from users inner join domains on domain_id = domains.id where username = '%n' and domain = '%d'
-user_query = select '$VMAIL_DIR' as home" >> dovecot-sql.conf.ext
+user_query = select '$VMAIL_DIR' as home" >> ../dovecot-sql.conf.ext
 systemctl restart postfix dovecot
