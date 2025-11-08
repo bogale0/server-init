@@ -7,20 +7,17 @@ a2dissite 000-default.conf
 
 cd /etc/apache2
 sed -i "s/\(Indexes\) FollowSymLinks/-\1/" apache2.conf
-printf $DOMAIN > certs
 cd sites-available
 cp 000-default.conf $DOMAIN.conf
-sed -i -e "s|DocumentRoot.*|Redirect permanent / http://www.$DOMAIN|" \
+sed -i -e "s|DocumentRoot.*|Redirect permanent / http://www.$DOMAIN/|" \
 -e "s/#\(ServerName\).*/\1 $DOMAIN/" $DOMAIN.conf
 a2ensite $DOMAIN
 systemctl restart apache2
 
-certbot register --agree-tos --eff-email -m postmaster@$DOMAIN
 mariadb-secure-installation
-cd ~/backup/www
-for file in $(ls -d *.*); do
+for file in $(ls ~/backup/www); do
     make-site $file empty
     mv ~/backup/www/$file /var/www
 done
-systemctl reload apache2
-ssl-cert-update
+certbot register --agree-tos --eff-email -m postmaster@$DOMAIN
+ssl-cert-update sites

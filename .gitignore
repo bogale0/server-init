@@ -1,2 +1,3 @@
-backup/*.tar.gz
+backup/*
+!backup/paths.bak
 optional

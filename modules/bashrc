@@ -11,9 +11,13 @@ update() {
 }
 
 make-site() {
+    if [ -z $1 ]; then
+        echo "make-site <domain> [empty]"
+        return 1
+    fi
     local NAME=$1
     cd /etc/apache2/sites-available
-    if [ -z $NAME -o -e $NAME.conf ]; then
+    if [ -e $NAME.conf ]; then
         echo "Site exists"
         return 1
     fi
@@ -26,40 +30,71 @@ make-site() {
         mkdir $NAME
         cp -r html $NAME/public_html
     fi
-    ssl-cert-add $NAME
+    systemctl reload apache2
 }
 
 ssl-cert-add() {
+    if [ -z $1 ]; then
+        echo "ssl-cert-add <domain>"
+        return 1
+    fi
     local NAME=$1
-    cd /etc/apache2
-    if [ -z $NAME ] || grep ^$NAME$ certs >> /dev/null; then
+    if grep ^$NAME$ ~/certs &> /dev/null; then
         echo "Domain exists"
         return 1
     fi
-    printf \\n$NAME >> certs
+    echo $NAME >> ~/certs
 }
 
 ssl-cert-update() {
-    certbot $1 --apache --expand -d $(cat /etc/apache2/certs | tr \\n ,)
+    if [ -z $1 ]; then
+        echo "ssl-cert-update [sites, certs]"
+        return 1
+    fi
+    local NAME=$1
+    local LIST
+    local MODE
+    case $NAME in
+        sites) MODE=run
+        cd /etc/apache2/sites-enabled
+        LIST=$(ls -I "*ssl.conf" | sed "s/\.conf//" | paste -sd,);;
+        certs) MODE=certonly
+        LIST=$(paste -sd, ~/certs);;
+        *) echo "Certificate does not exists"; return 1;;
+    esac
+    certbot $MODE --apache --cert-name $NAME --expand -d $LIST
 }
 
 mariadb-create-user() {
+    if [ -z $1 ]; then
+        echo "mariadb-create-user <name> => <password>"
+        return 1
+    fi
     local NAME=$1
     local PASSWORD=$(password-gen)
-    echo "$PASSWORD"
+    echo $PASSWORD
     mariadb -e "create database if not exists $NAME;
     create user $NAME@localhost identified by '$PASSWORD';
     grant select, insert, update, delete on $NAME.* to $NAME@localhost;"
 }
 
 mail-add-domain() {
-    mariadb -e "insert into mail.domains values (null, '$1')"
+    if [ -z $1 ]; then
+        echo "mail-add-domain <domain>"
+        return 1
+    fi
+    NAME=$1
+    mariadb -e "insert into mail.domains values (null, '$NAME')"
 }
 
 mail-add-user() {
-    USERNAME=${1%@*}
-    DOMAINNAME=${1#*@}
-    PASSWORD=$(password-gen)
+    if [ -z $1 ]; then
+        echo "mail-add-user <user>@<domain> => <password>"
+        return 1
+    fi
+    local USERNAME=${1%@*}
+    local DOMAINNAME=${1#*@}
+    local PASSWORD=$(password-gen)
     echo $PASSWORD
     PASSWORD=$(doveadm pw -p $PASSWORD -s BLF-CRYPT)
     mariadb -e "insert into mail.users values (null, '$USERNAME', '${PASSWORD#*\}}', (select id from mail.domains where domain = '$DOMAINNAME'))"

@@ -4,3 +4,4 @@ cd ${NAME%-*}/merged/opt/amnezia
 ln -s $PWD ~/amnezia-conf
 rm -r awg
 mv ~/backup/awg .
+docker restart amnezia-awg > /dev/null
