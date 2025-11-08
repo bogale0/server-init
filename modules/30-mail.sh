@@ -4,8 +4,6 @@ useradd -d $VMAIL_DIR -m -s /usr/sbin/nologin vmail
 chmod 700 $VMAIL_DIR
 VMAIL_UID=$(id vmail -u)
 VMAIL_GID=$(id vmail -g)
-ssl-cert-add mail.$DOMAIN
-ssl-cert-update certs
 CERT_PATH=/etc/letsencrypt/live/certs
 PASSWORD=$(mariadb-create-user mail)
 mariadb -e "use mail;
@@ -20,10 +18,7 @@ create table users (
     domain_id int not null references domains(id) on delete cascade,
     unique (username, domain_id)
 );"
-mail-add-domain $DOMAIN
-NAME=postmaster@$DOMAIN
-echo "Password for $NAME:"
-mail-add-user $NAME
+mail-add-user postmaster@$DOMAIN
 
 cd /etc/postfix
 sed -i -e "s|\(smtpd_tls_cert_file=\).*|\1$CERT_PATH/fullchain.pem|" \
