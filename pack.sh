@@ -13,4 +13,5 @@ cd -
 scp init.tar.gz $CONNECTION:
 rm init.tar.gz modules/domain
 ssh $CONNECTION "tar xzf init.tar.gz; source script.sh"
+echo $CONNECTION
 cat ~/.ssh/temp

@@ -11,6 +11,10 @@ update() {
 }
 
 ssl-cert-add() {
+    if [ -z $1 ]; then
+        echo "ssl-cert-add <domain>"
+        return 1
+    fi
     local NAME=$1
     if grep ^$NAME$ ~/certs &> /dev/null; then
         return 1
@@ -19,6 +23,10 @@ ssl-cert-add() {
 }
 
 ssl-cert-update() {
+    if [ -z $1 ]; then
+        echo "ssl-cert-update {sites, certs}"
+        return 1
+    fi
     local NAME=$1
     local MODE
     local LIST
@@ -47,7 +55,7 @@ make-site() {
     cp 000-default.conf $NAME.conf
     sed -i -e "s/#\(ServerName\).*/\1 $NAME/" \
     -e "s|\(DocumentRoot\).*|\1 /var/www/$NAME/public_html|" $NAME.conf
-    a2ensite $NAME
+    a2ensite $NAME > /dev/null
     systemctl reload apache2
     if [ "$2" != empty ]; then
         cd /var/www

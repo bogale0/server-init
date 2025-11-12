@@ -19,5 +19,6 @@ for file in $(ls ~/backup/www); do
     make-site $file empty
     mv ~/backup/www/$file /var/www
 done
+rm -r ~/backup/www
 certbot register --agree-tos --eff-email -m postmaster@$DOMAIN
 ssl-cert-update sites
