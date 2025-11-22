@@ -43,7 +43,7 @@ ssl-cert-update() {
 
 make-site() {
     if [ -z $1 ]; then
-        echo "make-site <domain> [empty]"
+        echo "make-site <domain> [empty, proxy] <proxy_from> <proxy_to>"
         return 1
     fi
     local NAME=$1
@@ -53,28 +53,44 @@ make-site() {
         return 1
     fi
     cp 000-default.conf $NAME.conf
-    sed -i -e "s/#\(ServerName\).*/\1 $NAME/" \
-    -e "s|\(DocumentRoot\).*|\1 /var/www/$NAME/public_html|" $NAME.conf
+    local REDIR="s|\(DocumentRoot\).*"
+    if [ "$2" = proxy ]; then
+        REDIR="$REDIR|ProxyPass $3 $4\n\tProxyPassReverse $3 $4|"
+    else
+        REDIR="$REDIR|\1 /var/www/$NAME/public_html|"
+    fi
+    sed -i -e "s/#\(ServerName\).*/\1 $NAME/" -e "$REDIR" $NAME.conf
     a2ensite $NAME > /dev/null
     systemctl reload apache2
-    if [ "$2" != empty ]; then
+    if [ -z $2 ]; then
         cd /var/www
         mkdir $NAME
         cp -r html $NAME/public_html
+    fi
+    if [ "$2" != empty ]; then
         ssl-cert-update sites
     fi
 }
 
 mariadb-create-user() {
     if [ -z $1 ]; then
-        echo "mariadb-create-user <name> => <password>"
+        echo "mariadb-create-user <name> [all] => <password>"
         return 1
     fi
     local NAME=$1
     local PASSWORD=$(password-gen)
+    local PRIVILEGES
+    if [ -z $2 ]; then
+        PRIVILEGES="select, insert, update, delete"
+    elif [ $2 = all ]; then
+        PRIVILEGES="all privileges"
+    else
+        echo "Wrong usage"
+        return 1
+    fi
     mariadb -e "create database if not exists $NAME;
     create user $NAME@localhost identified by '$PASSWORD';
-    grant select, insert, update, delete on $NAME.* to $NAME@localhost;
+    grant $PRIVILEGES on $NAME.* to $NAME@localhost;
     " && echo $PASSWORD
 }
 

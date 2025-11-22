@@ -1,9 +1,9 @@
 a2enmod proxy_http
 systemctl restart apache2
-make-site vault.$DOMAIN empty
 PORT=38358
-sed -i "s|\(DocumentRoot\).*|ProxyPreserveHost On\n\tProxyPass / http://localhost:$PORT/\n\tProxyPassReverse / http://localhost:$PORT/|" $NAME.conf
-ssl-cert-update sites
+make-site vault.$DOMAIN proxy / http://localhost:$PORT/
+sed -i "s|ProxyPass |ProxyPreserveHost On\n\t&|" $NAME.conf
+systemctl reload apache2
 
 mkdir /home/vaultwarden
 cd /home/vaultwarden

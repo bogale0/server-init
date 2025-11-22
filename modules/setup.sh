@@ -12,5 +12,5 @@ read SWAP_SIZE
 fallocate -l ${SWAP_SIZE} /swapfile
 chmod 600 /swapfile
 mkswap /swapfile
-echo '/swapfile none swap sw 0 0' >> /etc/fstab
+echo "/swapfile none swap sw 0 0" >> /etc/fstab
 grep Port ~/backup/awg/wg0.conf

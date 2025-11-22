@@ -1,7 +1,6 @@
 cd ~/backup
 for path in $(cat paths.bak); do
-    cp -r $path .
+    ln -s $path .
 done
-rm -r www/html
 cd ~
-tar czf backup.tar.gz backup
+tar chzf backup.tar.gz backup

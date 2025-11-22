@@ -1,2 +1,4 @@
+/root/amnezia-conf
 /var/www
-/root/amnezia-conf/awg
+/var/mail/vmail
+/home/vaultwarden/data

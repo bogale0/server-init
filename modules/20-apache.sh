@@ -15,7 +15,9 @@ a2ensite $DOMAIN
 systemctl restart apache2
 
 mariadb-secure-installation
-for file in $(ls ~/backup/www); do
+cd ~/backup/www
+rm -r html
+for file in $(ls); do
     make-site $file empty
     mv ~/backup/www/$file /var/www
 done
