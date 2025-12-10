@@ -16,10 +16,10 @@ ssl-cert-add() {
         return 1
     fi
     local NAME=$1
-    if grep ^$NAME$ ~/certs &> /dev/null; then
+    if grep ^$NAME$ ~/local/certs &> /dev/null; then
         return 1
     fi
-    echo $NAME >> ~/certs
+    echo $NAME >> ~/local/certs
 }
 
 ssl-cert-update() {
@@ -35,7 +35,7 @@ ssl-cert-update() {
         cd /etc/apache2/sites-enabled
         LIST=$(ls -I "*ssl.conf" | sed "s/\.conf//" | paste -sd,);;
         certs) MODE=certonly
-        LIST=$(paste -sd, ~/certs);;
+        LIST=$(paste -sd, ~/local/certs);;
         *) echo "Certificate does not exists"; return 1;;
     esac
     certbot $MODE -n --apache --cert-name $NAME --expand -d $LIST
@@ -90,8 +90,9 @@ mariadb-create-user() {
     fi
     mariadb -e "create database if not exists $NAME;
     create user $NAME@localhost identified by '$PASSWORD';
-    grant $PRIVILEGES on $NAME.* to $NAME@localhost;
-    " && echo $PASSWORD
+    grant $PRIVILEGES on $NAME.* to $NAME@localhost;"
+    echo "$NAME: $PASSWORD" > ~/local/mariadb.users
+    echo $PASSWORD
 }
 
 mail-add-user() {

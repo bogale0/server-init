@@ -1,4 +1,4 @@
-/root/amnezia-conf
-/var/www
-/var/mail/vmail
-/home/vaultwarden/data
+/root/amnezia-conf vpn-conf
+/var/www sites
+/var/mail/vmail emails
+/home/vaultwarden/data vwdata
