@@ -4,7 +4,7 @@ useradd -d $VMAIL_DIR -m -s /usr/sbin/nologin vmail
 chmod 700 $VMAIL_DIR
 VMAIL_UID=$(id vmail -u)
 VMAIL_GID=$(id vmail -g)
-CERT_PATH=/etc/letsencrypt/live/certs
+CERT_PATH=/etc/letsencrypt/live/$DOMAIN
 PASSWORD=$(mariadb-create-user mail)
 mariadb -e "use mail;
 create table aliases (
@@ -20,10 +20,10 @@ create table users (
     id int auto_increment primary key,
     username varchar(190) not null,
     password varchar(255) not null,
-    domain_id int not null references domains(id) on delete cascade,
-    unique (username, domain_id)
+    domain_id int not null,
+    unique (username, domain_id),
+    foreign key (domain_id) references domains(id) on delete cascade
 );"
-mail-add-user me@$DOMAIN
 
 cd /etc/postfix
 sed -i -e "s|\(smtpd_tls_cert_file=\).*|\1$CERT_PATH/fullchain.pem|" \
@@ -49,8 +49,11 @@ virtual_alias_maps = mysql:/etc/postfix/aliases.cf
 virtual_uid_maps = static:$VMAIL_UID
 virtual_gid_maps = static:$VMAIL_GID" >> main.cf
 
-read -p "Enter resend.com api key: " API_KEY
-echo "[smtp.resend.com]:2587 resend:$API_KEY" > smtp_sasl
+read -s -p "Enter resend.com api key: " API_KEY
+echo
+cat <<EOF > smtp_sasl
+[smtp.resend.com]:2587 resend:$API_KEY
+EOF
 chmod 600 smtp_sasl
 postmap smtp_sasl
 sed -i -e "s/#\(submission \)/\1/" \
