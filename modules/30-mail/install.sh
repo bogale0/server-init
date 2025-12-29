@@ -30,30 +30,30 @@ sed -i -e "s|\(smtpd_tls_cert_file=\).*|\1$CERT_PATH/fullchain.pem|" \
 -e "s|\(smtpd_tls_key_file=\).*|\1$CERT_PATH/privkey.pem|" \
 -e "s/\(smtp_tls_security_level\).*/\1=encrypt/" \
 -e "s/\(myhostname =\).*/\1 mail.$DOMAIN/" \
+-e "s/\(alias_maps =\).*/\1/" \
+-e "s/\(alias_database =\).*/\1/" \
 -e "s/\(myorigin =\).*/\1 localhost/" \
 -e "s/\(mydestination =\).*/\1/" \
 -e "s/\(relayhost =\).*/\1 [smtp.resend.com]:2587/" main.cf
 echo "local_recipient_maps =
-smtp_use_tls = yes
+smtpd_sasl_path = private/auth
+smtpd_sasl_security_options = noanonymous
+smtpd_sasl_type = dovecot
+smtpd_use_tls = yes
 smtp_sasl_auth_enable = yes
 smtp_sasl_password_maps = hash:/etc/postfix/smtp_sasl
 smtp_sasl_security_options = noanonymous
-smtpd_use_tls = yes
-smtpd_sasl_type = dovecot
-smtpd_sasl_path = private/auth
-smtpd_sasl_security_options = noanonymous
+smtp_use_tls = yes
+virtual_alias_maps = mysql:/etc/postfix/aliases.cf
+virtual_gid_maps = static:$VMAIL_GID
 virtual_mailbox_base = $VMAIL_DIR
 virtual_mailbox_domains = mysql:/etc/postfix/domains.cf
 virtual_mailbox_maps = mysql:/etc/postfix/users.cf
-virtual_alias_maps = mysql:/etc/postfix/aliases.cf
-virtual_uid_maps = static:$VMAIL_UID
-virtual_gid_maps = static:$VMAIL_GID" >> main.cf
+virtual_uid_maps = static:$VMAIL_UID" >> main.cf
 
-read -s -p "Enter resend.com api key: " API_KEY
+read -sp "Enter Resend API key: " API_KEY
 echo
-cat <<EOF > smtp_sasl
-[smtp.resend.com]:2587 resend:$API_KEY
-EOF
+echo "[smtp.resend.com]:2587 resend:$API_KEY" > smtp_sasl
 chmod 600 smtp_sasl
 postmap smtp_sasl
 sed -i -e "s/#\(submission \)/\1/" \
@@ -61,17 +61,16 @@ sed -i -e "s/#\(submission \)/\1/" \
 -e "0,/#\(.*smtpd_sasl_auth_enable=\)/s//\1/" \
 -e "0,/#\(.*smtpd_reject_unlisted_recipient=\)/s//\1/" \
 -e "0,/#\(.*smtpd_recipient_restrictions=\)/s//\1/" master.cf
-QUERY="aliases.cf domains.cf users.cf"
+FILES="aliases.cf domains.cf users.cf"
 echo "hosts = 127.0.0.1
 dbname = mail
 user = mail
-password = $PASSWORD" | tee $QUERY > /dev/null
-chmod 640 $QUERY
-chown root:postfix $QUERY
-QUERY="query = select"
-echo "$QUERY destination from aliases where source='%s'" >> aliases.cf
-echo "$QUERY 'OK' from domains where domain='%s'" >> domains.cf
-echo "$QUERY concat(domain,'/',username,'/') from users inner join domains on domain_id=domains.id where username='%u' and domain='%d'" >> users.cf
+password = $PASSWORD" | tee $FILES > /dev/null
+chmod 640 $FILES
+chown root:postfix $FILES
+echo "query = select destination from aliases where source='%s'" >> aliases.cf
+echo "query = select 'OK' from domains where domain='%s'" >> domains.cf
+echo "query = select concat(domain,'/',username,'/') from users inner join domains on domain_id=domains.id where username='%u' and domain='%d'" >> users.cf
 
 cd /etc/dovecot/conf.d
 sed -i -e "s/\!include.*system/#&/" \

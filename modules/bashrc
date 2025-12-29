@@ -12,7 +12,7 @@ update() {
 
 make-site() {
     if [ -z $1 ]; then
-        echo "make-site <domain> [empty, proxy] <proxy_from> <proxy_to>"
+        echo "make-site <domain> [empty, proxy] <from> <to>"
         return 1
     fi
     local NAME=$1
@@ -25,9 +25,9 @@ make-site() {
     sed -i "s/<domain_name>/$NAME/" $NAME.conf
     cp default-ssl.conf $NAME-ssl.conf
     if [ "$2" = proxy ]; then
-        sed -i "s|DocumentRoot.*|ProxyPass $3 $4\n    ProxyPassReverse $3 $4|" $NAME-ssl.conf
+        sed -i "s|DocumentRoot.*|ProxyPreserveHost On\n    ProxyPass $3 $4\n    ProxyPassReverse $3 $4|" $NAME-ssl.conf
     fi
-    sed -i -e "s/<domain_name>/$NAME/" $NAME-ssl.conf
+    sed -i "s/<domain_name>/$NAME/" $NAME-ssl.conf
     a2ensite $NAME.conf $NAME-ssl.conf > /dev/null
     systemctl reload apache2
     if [ -z $2 ]; then

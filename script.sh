@@ -11,7 +11,8 @@ for module in $(ls [0-9][0-9]-*/install.sh); do
     if [ "$result" = n ]; then
         continue
     fi
-    source $module
+    cd ${module%/*}
+    source install.sh
     cd ~/modules
     rm $module
 done
