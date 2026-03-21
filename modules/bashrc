@@ -56,7 +56,7 @@ mariadb-create-user() {
     mariadb -e "create database if not exists $NAME;
     create user $NAME@localhost identified by '$PASSWORD';
     grant $PRIVILEGES on $NAME.* to $NAME@localhost;"
-    echo "$NAME: $PASSWORD" >> ~/local/mariadb.users
+    echo "$NAME:$PASSWORD" >> ~/local/mariadb.users
     echo $PASSWORD
 }
 

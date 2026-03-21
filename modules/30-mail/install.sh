@@ -6,24 +6,7 @@ VMAIL_UID=$(id vmail -u)
 VMAIL_GID=$(id vmail -g)
 CERT_PATH=/etc/letsencrypt/live/$DOMAIN
 PASSWORD=$(mariadb-create-user mail)
-mariadb -e "use mail;
-create table aliases (
-    id int auto_increment primary key,
-    source varchar(255) unique not null,
-    destination varchar(255) not null
-);
-create table domains (
-    id int auto_increment primary key,
-    domain varchar(64) unique not null
-);
-create table users (
-    id int auto_increment primary key,
-    username varchar(190) not null,
-    password varchar(255) not null,
-    domain_id int not null,
-    unique (username, domain_id),
-    foreign key (domain_id) references domains(id) on delete cascade
-);"
+mariadb -e "source db.sql"
 
 cd /etc/postfix
 sed -i -e "s|\(smtpd_tls_cert_file=\).*|\1$CERT_PATH/fullchain.pem|" \
@@ -52,7 +35,6 @@ virtual_mailbox_maps = mysql:/etc/postfix/users.cf
 virtual_uid_maps = static:$VMAIL_UID" >> main.cf
 
 read -sp "Enter Resend API key: " API_KEY
-echo
 echo "[smtp.resend.com]:2587 resend:$API_KEY" > smtp_sasl
 chmod 600 smtp_sasl
 postmap smtp_sasl

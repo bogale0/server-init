@@ -15,8 +15,6 @@ systemctl restart apache2
 mariadb-secure-installation
 certbot register --agree-tos --eff-email -m postmaster@$DOMAIN
 read -sp "Enter Cloudflare API token: " API_TOKEN
-echo
 echo "dns_cloudflare_api_token = $API_TOKEN" > ~/local/cf.ini
 chmod 600 ~/local/cf.ini
-unset API_TOKEN
 certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/local/cf.ini -d $DOMAIN -d "*.$DOMAIN"

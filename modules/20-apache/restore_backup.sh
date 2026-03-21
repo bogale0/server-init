@@ -1,8 +1,8 @@
-cd ~/backup/www
+tcloud download backup/$BACKUP_DATE/sites ~/sites-backup || exit 1
+cd ~/sites-backup
 rm -r html
-for file in $(ls); do
-    make-site $file empty
-    mv ~/backup/www/$file /var/www
+for url in *; do
+    make-site $url empty
+    mv $PWD/$url /var/www
 done
-rm -r ~/backup/www
-ssl-cert-update sites
+rm -r $PWD
