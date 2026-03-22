@@ -2,6 +2,7 @@ mkdir ~/local
 cd ~/modules
 cat domain bashrc >> ~/.bashrc
 rm domain bashrc ~/init.tar.gz
+mv ~/secret/github ~/.ssh
 source ~/.bashrc
 update
 apt install -y speedtest-cli

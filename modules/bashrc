@@ -1,3 +1,5 @@
+alias tcloud='php ~/Tcloud/cli_client/main.php'
+
 password-gen() {
     head -c 15 /dev/urandom | base64 | tr +/ -_
 }
@@ -39,15 +41,18 @@ make-site() {
 
 mariadb-create-user() {
     if [ -z $1 ]; then
-        echo "mariadb-create-user <name> [all] => <password>"
+        echo "mariadb-create-user <name> <password[=auto]> [all] => <password>"
         return 1
     fi
     local NAME=$1
-    local PASSWORD=$(password-gen)
+    local PASSWORD=$2
+    if [ -z $PASSWORD -o $PASSWORD = auto]; then
+        PASSWORD=$(password-gen)
+    fi
     local PRIVILEGES
-    if [ -z $2 ]; then
+    if [ -z $3 ]; then
         PRIVILEGES="select, insert, update, delete"
-    elif [ $2 = all ]; then
+    elif [ $3 = all ]; then
         PRIVILEGES="all privileges"
     else
         echo "Wrong usage"

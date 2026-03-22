@@ -6,12 +6,15 @@ else
 fi
 CONNECTION=root@$DOMAIN_NAME
 printf "\nDOMAIN=$DOMAIN_NAME\n\n" > modules/domain
-tar czf init.tar.gz modules script.sh
+sudo cp -r /var/www/html/secret .
+sudo chown bogale: secret
+cp ~/.ssh/github secret
+tar czf init.tar.gz modules secret script.sh
 cd ~/.ssh
 cat temp.pub server.pub | ssh $CONNECTION "cat > .ssh/authorized_keys"
 cd -
 scp init.tar.gz $CONNECTION:
-rm init.tar.gz modules/domain
+rm -r init.tar.gz secret modules/domain
 ssh $CONNECTION "tar xzf init.tar.gz; source script.sh"
 echo $CONNECTION
 cat ~/.ssh/temp
