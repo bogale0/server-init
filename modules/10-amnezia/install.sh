@@ -1,3 +1,4 @@
+apt install -y speedtest-cli
 sed -i "1s/^/#/" ~/.ssh/authorized_keys
 cd /var/lib/docker/overlay2
 NAME=$(ls -d *-init)

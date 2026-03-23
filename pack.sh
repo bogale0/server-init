@@ -7,8 +7,8 @@ fi
 CONNECTION=root@$DOMAIN_NAME
 printf "\nDOMAIN=$DOMAIN_NAME\n\n" > modules/domain
 sudo cp -r /var/www/html/secret .
-sudo chown bogale: secret
-cp ~/.ssh/github secret
+sudo chown $USER: secret
+cp -r ~/.tcloud ~/.ssh/github secret
 tar czf init.tar.gz modules secret script.sh
 cd ~/.ssh
 cat temp.pub server.pub | ssh $CONNECTION "cat > .ssh/authorized_keys"

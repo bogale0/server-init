@@ -1,4 +1,4 @@
-apt install -y apache2 php php-fpm certbot python3-certbot-dns-cloudflare php-mysql mariadb-server mariadb-client
+apt install -y apache2 php php-fpm php-curl certbot python3-certbot-dns-cloudflare php-mysql mariadb-server mariadb-client
 PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 a2dismod php$PHP_VERSION mpm_prefork
 a2enmod mpm_event proxy_fcgi proxy_http http2 ssl
@@ -18,3 +18,15 @@ read -sp "Enter Cloudflare API token: " API_TOKEN
 echo "dns_cloudflare_api_token = $API_TOKEN" > ~/local/cf.ini
 chmod 600 ~/local/cf.ini
 certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/local/cf.ini -d $DOMAIN -d "*.$DOMAIN"
+
+tcloud download backup/sites/$BACKUP_DATE ~/sites-backup || exit 1
+cd ~/sites-backup
+mariadb < wordpress.sql
+mv mariadb.users ~/local
+rm -r html wordpress.sql
+mariadb-create-user wordpress all
+for url in *; do
+    make-site $url empty
+    mv ~/sites-backup/$url /var/www
+done
+rm -r ~/sites-backup

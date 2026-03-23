@@ -5,7 +5,6 @@ chmod 700 $VMAIL_DIR
 VMAIL_UID=$(id vmail -u)
 VMAIL_GID=$(id vmail -g)
 CERT_PATH=/etc/letsencrypt/live/$DOMAIN
-PASSWORD=$(mariadb-create-user mail)
 mariadb -e "source db.sql"
 
 cd /etc/postfix

@@ -4,6 +4,14 @@ password-gen() {
     head -c 15 /dev/urandom | base64 | tr +/ -_
 }
 
+mariadb-backup-db() {
+    mariadb-dump -B --skip-comments $1 || exit 1
+}
+
+crontab-add-task() {
+    (crontab -l 2> /dev/null; echo "$1") | sort | uniq | crontab -
+}
+
 update() {
     apt update
     apt upgrade -y
@@ -41,18 +49,18 @@ make-site() {
 
 mariadb-create-user() {
     if [ -z $1 ]; then
-        echo "mariadb-create-user <name> <password[=auto]> [all] => <password>"
+        echo "mariadb-create-user <name> [all] => <password>"
         return 1
     fi
     local NAME=$1
-    local PASSWORD=$2
-    if [ -z $PASSWORD -o $PASSWORD = auto]; then
+    local PASSWORD=$(grep $NAME: ~/local/mariadb.users | sed "s/.*://")
+    if [ -z $PASSWORD ]; then
         PASSWORD=$(password-gen)
     fi
     local PRIVILEGES
-    if [ -z $3 ]; then
+    if [ -z $2 ]; then
         PRIVILEGES="select, insert, update, delete"
-    elif [ $3 = all ]; then
+    elif [ $2 = all ]; then
         PRIVILEGES="all privileges"
     else
         echo "Wrong usage"
@@ -60,8 +68,10 @@ mariadb-create-user() {
     fi
     mariadb -e "create database if not exists $NAME;
     create user $NAME@localhost identified by '$PASSWORD';
-    grant $PRIVILEGES on $NAME.* to $NAME@localhost;"
-    echo "$NAME:$PASSWORD" >> ~/local/mariadb.users
+    grant $PRIVILEGES on $NAME.* to $NAME@localhost;" || return 1
+    cd ~/local
+    sed -i "/^$NAME:/d" mariadb.users
+    echo "$NAME:$PASSWORD" >> mariadb.users
     echo $PASSWORD
 }
 

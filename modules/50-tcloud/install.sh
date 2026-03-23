@@ -1,14 +1,12 @@
 apt install -y git
 eval "$(ssh-agent -s)"
-ssh-add .ssh/github-key
+ssh-add .ssh/github
 git clone git@github.com:bogale0/Tcloud.git
-mariadb -e "source Tcloud/api/db.sql"
-make-site api.$DOMAIN
-cd api.$DOMAIN/public_html
-rm index.html
+cd /var/www/api.$DOMAIN/public_html
+rm -r tcloud
 mv ~/Tcloud/api tcloud
-echo "*/5 * * * * /usr/bin/php $PWD/tcloud/downloads/cleanup.php" | crontab -
+crontab-add-task "*/5 * * * * /usr/bin/php $PWD/tcloud/downloads/cleanup.php"
 mv ~/secret ..
 mkdir ../storage
-chown www-data: ../storage
+chown www-data: ../storage tcloud/downloads
 #mariadb-create-user
