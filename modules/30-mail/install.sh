@@ -1,11 +1,11 @@
 apt install -y postfix postfix-mysql dovecot-imapd dovecot-mysql
 VMAIL_DIR=/var/mail/vmail
 useradd -d $VMAIL_DIR -m -s /usr/sbin/nologin vmail
-chmod 700 $VMAIL_DIR
+#chmod 700 $VMAIL_DIR
 VMAIL_UID=$(id vmail -u)
 VMAIL_GID=$(id vmail -g)
 CERT_PATH=/etc/letsencrypt/live/$DOMAIN
-mariadb -e "source db.sql"
+PASSWORD=$(mariadb-create-user mail)
 
 cd /etc/postfix
 sed -i -e "s|\(smtpd_tls_cert_file=\).*|\1$CERT_PATH/fullchain.pem|" \
@@ -33,9 +33,7 @@ virtual_mailbox_domains = mysql:/etc/postfix/domains.cf
 virtual_mailbox_maps = mysql:/etc/postfix/users.cf
 virtual_uid_maps = static:$VMAIL_UID" >> main.cf
 
-read -sp "Enter Resend API key: " API_KEY
-echo "[smtp.resend.com]:2587 resend:$API_KEY" > smtp_sasl
-chmod 600 smtp_sasl
+mv ~/secret/smtp_sasl .
 postmap smtp_sasl
 sed -i -e "s/#\(submission \)/\1/" \
 -e "s/#\(.*smtpd_tls_security_level=\)/\1/" \

@@ -12,21 +12,6 @@ mv ~/modules/20-apache/*default*.conf .
 make-site $DOMAIN empty
 sed -i "s|DocumentRoot.*|Redirect permanent / https://www.$DOMAIN/|" $DOMAIN-ssl.conf
 systemctl restart apache2
-mariadb-secure-installation
+printf '\n\nn\n\n\n\n\n' | mariadb-secure-installation
 certbot register --agree-tos --eff-email -m postmaster@$DOMAIN
-read -sp "Enter Cloudflare API token: " API_TOKEN
-echo "dns_cloudflare_api_token = $API_TOKEN" > ~/local/cf.ini
-chmod 600 ~/local/cf.ini
-certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/local/cf.ini -d $DOMAIN -d "*.$DOMAIN"
-
-tcloud download backup/sites/$BACKUP_DATE ~/sites-backup || exit 1
-cd ~/sites-backup
-mariadb < wordpress.sql
-mv mariadb.users ~/local
-rm -r html wordpress.sql
-mariadb-create-user wordpress all
-for url in *; do
-    make-site $url empty
-    mv ~/sites-backup/$url /var/www
-done
-rm -r ~/sites-backup
+certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/secret/cf.ini -d $DOMAIN -d "*.$DOMAIN"

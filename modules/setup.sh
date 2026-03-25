@@ -1,9 +1,14 @@
-mkdir ~/local
+for i in {1..3}; do
+    openssl enc -aes-128-cbc -pbkdf2 -d -in secret.enc -out secret.tar.gz && break
+done
+tar xzf secret.tar.gz || exit 1
+rm secret.tar.gz init.tar.gz secret.enc
+cd secret
+mv tcloud-client ~/.tcloud
+mv github ~/.ssh
 cd ~/modules
 cat domain bashrc >> ~/.bashrc
-rm domain bashrc ~/init.tar.gz
-mv ~/secret/github ~/.ssh
-mv ~/secret/.tcloud ~
+rm domain bashrc
 source ~/.bashrc
 update
 cd /etc/ssh

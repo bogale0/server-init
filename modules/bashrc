@@ -53,7 +53,7 @@ mariadb-create-user() {
         return 1
     fi
     local NAME=$1
-    local PASSWORD=$(grep $NAME: ~/local/mariadb.users | sed "s/.*://")
+    local PASSWORD=$(grep $NAME: ~/secret/mariadb.users | sed "s/.*://")
     if [ -z $PASSWORD ]; then
         PASSWORD=$(password-gen)
     fi
@@ -69,7 +69,7 @@ mariadb-create-user() {
     mariadb -e "create database if not exists $NAME;
     create user $NAME@localhost identified by '$PASSWORD';
     grant $PRIVILEGES on $NAME.* to $NAME@localhost;" || return 1
-    cd ~/local
+    cd ~/secret
     sed -i "/^$NAME:/d" mariadb.users
     echo "$NAME:$PASSWORD" >> mariadb.users
     echo $PASSWORD

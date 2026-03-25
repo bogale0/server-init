@@ -6,15 +6,12 @@ else
 fi
 CONNECTION=root@$DOMAIN_NAME
 printf "\nDOMAIN=$DOMAIN_NAME\n\n" > modules/domain
-sudo cp -r /var/www/html/secret .
-sudo chown $USER: secret
-cp -r ~/.tcloud ~/.ssh/github secret
-tar czf init.tar.gz modules secret script.sh
+tar czf init.tar.gz secret.enc modules script.sh
 cd ~/.ssh
 cat temp.pub server.pub | ssh $CONNECTION "cat > .ssh/authorized_keys"
 cd -
 scp init.tar.gz $CONNECTION:
-rm -r init.tar.gz secret modules/domain
+rm init.tar.gz modules/domain
 ssh $CONNECTION "tar xzf init.tar.gz; source script.sh"
 echo $CONNECTION
 cat ~/.ssh/temp
