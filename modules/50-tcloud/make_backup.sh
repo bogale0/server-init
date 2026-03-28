@@ -1,10 +1,12 @@
-cd /tmp
-mariadb-backup-db tcloud > backup.sql
-tcloud upload backup.sql backup/tcloud/$(date -I)
-tar czf backup.tar.gz backup.sql
+cd /var/www/api.$DOMAIN
+mkdir backup
+mariadb-backup-db tcloud > backup/db.sql
+cp -r storage backup
+tcloud upload backup backup/tcloud/$(date -I)
+tar czf backup.tar.gz backup
 openssl rand -out backup.enc 16
 openssl enc -aes-256-cbc -in backup.tar.gz -K $(xxd -p -c 32 ~/.tcloud/key) -iv $(xxd -p backup.enc) >> backup.enc
-rm backup.tar.gz backup.sql
+rm -r backup backup.tar.gz
 GITHUB_TOKEN=$(cat ~/secret/github)
 export $(curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/bogale0/Tcloud/releases/latest |
 php -r '$res = json_decode(file_get_contents("php://stdin"), true);
@@ -19,3 +21,4 @@ if [ -n "$ASSET_URL" ]; then
     curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" $ASSET_URL
 fi
 curl -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/octet-stream" --data-binary @backup.enc $UPLOAD_URL
+rm backup.enc

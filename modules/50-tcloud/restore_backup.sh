@@ -8,10 +8,12 @@ foreach ($res["assets"] as $asset) {
         break;
     }
 }')
-cd /tmp
+cd /var/www/api.$DOMAIN
 curl -L -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/octet-stream" -o backup.enc $ASSET_URL
 tail -c +17 backup.enc > backup-iv.enc
 openssl enc -aes-256-cbc -d -in backup-iv.enc -out backup.tar.gz -K $(xxd -p -c 32 ~/.tcloud/key) -iv $(xxd -p -l 16 backup.enc)
 tar xzf backup.tar.gz
-mariadb < backup.sql
-rm backup*
+mariadb < backup/db.sql
+mv backup/storage storage
+chown -R www-data: storage
+rm -r backup*

@@ -12,14 +12,6 @@ crontab-add-task() {
     (crontab -l 2> /dev/null; echo "$1") | sort | uniq | crontab -
 }
 
-update() {
-    apt update
-    apt upgrade -y
-    apt autopurge -y
-    journalctl --vacuum-time=7d
-    apt clean
-}
-
 make-site() {
     if [ -z $1 ]; then
         echo "make-site <domain> [empty, proxy] <from> <to>"

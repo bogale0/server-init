@@ -1,7 +1,7 @@
-apt install -y postfix postfix-mysql dovecot-imapd dovecot-mysql
+DEBIAN_FRONTEND=noninteractive apt-get install -y postfix postfix-mysql dovecot-imapd dovecot-mysql
 VMAIL_DIR=/var/mail/vmail
 useradd -d $VMAIL_DIR -m -s /usr/sbin/nologin vmail
-#chmod 700 $VMAIL_DIR
+chmod 700 $VMAIL_DIR
 VMAIL_UID=$(id vmail -u)
 VMAIL_GID=$(id vmail -g)
 CERT_PATH=/etc/letsencrypt/live/$DOMAIN
