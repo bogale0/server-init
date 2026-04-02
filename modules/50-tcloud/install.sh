@@ -1,3 +1,5 @@
+cd secret
+mv tcloud-client ~/.tcloud
 apt-get install -y xxd
 cd
 curl -L -H "Authorization: token $(cat secret/github)" -o tcloud.tar.gz https://api.github.com/repos/bogale0/Tcloud/tarball/main

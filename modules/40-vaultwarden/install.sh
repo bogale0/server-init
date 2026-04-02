@@ -1,9 +1,9 @@
 PORT=39447
 NAME=vault.$DOMAIN
-make-site $NAME proxy / http://localhost:$PORT/
 mkdir -m 700 /home/vaultwarden
+mv vw.env /home/vaultwarden/.env
+make-site $NAME proxy / http://localhost:$PORT/
 cd /home/vaultwarden
-mv ~/modules/40-vaultwarden/vw.env .env
 (echo "DOMAIN=https://$NAME"; cat ~/secret/vw.token) >> .env
 docker pull vaultwarden/server:latest
 docker run -d --name vaultwarden -v $PWD/data:/data --env-file .env \

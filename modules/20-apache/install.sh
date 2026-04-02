@@ -5,10 +5,10 @@ a2enmod mpm_event proxy_fcgi proxy_http http2 ssl
 a2enconf php$PHP_VERSION-fpm
 a2dissite 000-default.conf
 sed -i "s/<domain>/$DOMAIN/" default-ssl.conf
+mv *default*.conf /etc/apache2/sites-available
 cd /etc/apache2
 sed -i "s/\(Indexes\) \(FollowSymLinks\)/-\1 +\2/" apache2.conf
 cd sites-available
-mv ~/modules/20-apache/*default*.conf .
 systemctl restart apache2
 certbot register --agree-tos --eff-email -m postmaster@$DOMAIN
 certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/secret/cf.ini -d $DOMAIN -d "*.$DOMAIN"

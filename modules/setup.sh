@@ -1,17 +1,12 @@
-for i in {1..3}; do
-    openssl enc -aes-128-cbc -pbkdf2 -d -in secret.enc -out secret.tar.gz && break
-done
-tar xzf secret.tar.gz || exit 1
-rm secret.tar.gz init.tar.gz secret.enc
-chown -R root: secret
-cd secret
-mv tcloud-client ~/.tcloud
-cd ~/modules
-cat domain bashrc >> ~/.bashrc
-rm domain bashrc
-source ~/.bashrc
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+rm -r /etc/ssh/sshd_config.d
+apt-get purge -y openssh-server
+apt-get install -y zstd openssh-server
+apt-get upgrade -y
+cd ~/server-init/modules
+cat ~/domain bashrc >> ~/.bashrc
+rm ~/domain bashrc
+source ~/.bashrc
 cd /etc/ssh
 (echo PasswordAuthentication no; cat sshd_config) > .sshd_config.tmp
 mv .sshd_config.tmp sshd_config

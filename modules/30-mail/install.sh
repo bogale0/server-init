@@ -1,4 +1,4 @@
-DEBIAN_FRONTEND=noninteractive apt-get install -y postfix postfix-mysql dovecot-imapd dovecot-mysql
+apt-get install -y postfix postfix-mysql dovecot-imapd dovecot-mysql
 VMAIL_DIR=/var/mail/vmail
 useradd -d $VMAIL_DIR -m -s /usr/sbin/nologin vmail
 chmod 700 $VMAIL_DIR

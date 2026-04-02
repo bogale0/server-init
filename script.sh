@@ -1,11 +1,13 @@
+DEBIAN_FRONTEND=noninteractive
+MODULES_DIR=~/server-init/modules
+cd $MODULES_DIR
 if [ -z $DOMAIN ]; then
-    NAME=~/modules/setup.sh
+    NAME=$PWD/setup.sh
     source $NAME
     rm $NAME
     reboot
     exit
 fi
-cd ~/modules
 for target in $(ls [0-9][0-9]-*/install.sh); do
     read -p "Install module ${target:3:-11}? [Y/n] " result
     if [ "$result" = n ]; then
@@ -13,6 +15,6 @@ for target in $(ls [0-9][0-9]-*/install.sh); do
     fi
     cd ${target%/*}
     source install.sh
-    cd ~/modules
+    cd $MODULES_DIR
     rm $target
 done
