@@ -1,3 +1,5 @@
+echo "postfix postfix/main_mailer_type select Internet Site" | debconf-set-selections
+echo "postfix postfix/mailname string $(hostname)" | debconf-set-selections
 apt-get install -y postfix postfix-mysql dovecot-imapd dovecot-mysql
 VMAIL_DIR=/var/mail/vmail
 useradd -d $VMAIL_DIR -m -s /usr/sbin/nologin vmail
@@ -8,10 +10,11 @@ CERT_PATH=/etc/letsencrypt/live/$DOMAIN
 PASSWORD=$(mariadb-create-user mail)
 
 cd /etc/postfix
+#sed -i "s/\(smtpd_relay_restrictions =\).*/\1 permit_sasl_authenticated reject_unauth_destination/" main.cf
 sed -i -e "s|\(smtpd_tls_cert_file=\).*|\1$CERT_PATH/fullchain.pem|" \
 -e "s|\(smtpd_tls_key_file=\).*|\1$CERT_PATH/privkey.pem|" \
 -e "s/\(smtp_tls_security_level\).*/\1=encrypt/" \
--e "s/\(myhostname =\).*/\1 mail.$DOMAIN/" \
+-e "s/\(myhostname =\).*/\1 $DOMAIN/" \
 -e "s/\(alias_maps =\).*/\1/" \
 -e "s/\(alias_database =\).*/\1/" \
 -e "s/\(myorigin =\).*/\1 localhost/" \

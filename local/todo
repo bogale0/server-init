@@ -1,0 +1,5 @@
+- upgrade security: no root through ssh
+- solve file mode & ownership problems with secrets
+- gotta write my own sshd_config
+- tcloud integration
+- make target for ip only with no domain
