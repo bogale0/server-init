@@ -1,4 +1,4 @@
-DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive
 MODULES_DIR=~/server-init/modules
 cd $MODULES_DIR
 if [ -z $DOMAIN ]; then
