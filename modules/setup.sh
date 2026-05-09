@@ -2,7 +2,6 @@ apt-get update
 apt-get install -y zstd
 echo "openssh-server openssh-server/sshd_config select keep the local version currently installed" | debconf-set-selections
 apt-get dist-upgrade -y
-cd ~/server-init/modules
 cat ~/domain bashrc >> ~/.bashrc
 rm ~/domain bashrc
 source ~/.bashrc
