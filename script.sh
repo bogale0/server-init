@@ -8,7 +8,7 @@ if [ -z $DOMAIN ]; then
     reboot
     exit
 fi
-for target in $(ls [0-9][0-9]-*/install.sh); do
+for target in [0-9][0-9]-*/install.sh; do
     read -p "Install module ${target:3:-11}? [Y/n] " result
     if [ "$result" = n ]; then
         return

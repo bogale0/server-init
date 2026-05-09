@@ -1,5 +1,3 @@
-echo "postfix postfix/main_mailer_type select Internet Site" | debconf-set-selections
-echo "postfix postfix/mailname string $(hostname)" | debconf-set-selections
 apt-get install -y postfix postfix-mysql dovecot-imapd dovecot-mysql
 VMAIL_DIR=/var/mail/vmail
 useradd -d $VMAIL_DIR -m -s /usr/sbin/nologin vmail
@@ -10,7 +8,6 @@ CERT_PATH=/etc/letsencrypt/live/$DOMAIN
 PASSWORD=$(mariadb-create-user mail)
 
 cd /etc/postfix
-#sed -i "s/\(smtpd_relay_restrictions =\).*/\1 permit_sasl_authenticated reject_unauth_destination/" main.cf
 sed -i -e "s|\(smtpd_tls_cert_file=\).*|\1$CERT_PATH/fullchain.pem|" \
 -e "s|\(smtpd_tls_key_file=\).*|\1$CERT_PATH/privkey.pem|" \
 -e "s/\(smtp_tls_security_level\).*/\1=encrypt/" \
@@ -20,6 +17,7 @@ sed -i -e "s|\(smtpd_tls_cert_file=\).*|\1$CERT_PATH/fullchain.pem|" \
 -e "s/\(myorigin =\).*/\1 localhost/" \
 -e "s/\(mydestination =\).*/\1/" \
 -e "s/\(relayhost =\).*/\1 [smtp.resend.com]:2587/" main.cf
+cat <<EOF >> main.cf
 echo "local_recipient_maps =
 smtpd_sasl_path = private/auth
 smtpd_sasl_security_options = noanonymous
@@ -34,7 +32,8 @@ virtual_gid_maps = static:$VMAIL_GID
 virtual_mailbox_base = $VMAIL_DIR
 virtual_mailbox_domains = mysql:/etc/postfix/domains.cf
 virtual_mailbox_maps = mysql:/etc/postfix/users.cf
-virtual_uid_maps = static:$VMAIL_UID" >> main.cf
+virtual_uid_maps = static:$VMAIL_UID
+EOF
 
 mv ~/secret/smtp_sasl .
 postmap smtp_sasl
@@ -44,12 +43,15 @@ sed -i -e "s/#\(submission \)/\1/" \
 -e "0,/#\(.*smtpd_reject_unlisted_recipient=\)/s//\1/" \
 -e "0,/#\(.*smtpd_recipient_restrictions=\)/s//\1/" master.cf
 FILES="aliases.cf domains.cf users.cf"
-echo "hosts = 127.0.0.1
+cat <<EOF | tee $FILES > /dev/null
+hosts = 127.0.0.1
 dbname = mail
 user = mail
-password = $PASSWORD" | tee $FILES > /dev/null
+password = $PASSWORD
+EOF
 chmod 640 $FILES
 chown root:postfix $FILES
+unset FILES
 echo "query = select destination from aliases where source='%s'" >> aliases.cf
 echo "query = select 'OK' from domains where domain='%s'" >> domains.cf
 echo "query = select concat(domain,'/',username,'/') from users inner join domains on domain_id=domains.id where username='%u' and domain='%d'" >> users.cf
@@ -68,4 +70,5 @@ sed -i -e "s/#\(driver =\).*/\1 mysql/" \
 -e "s/#\(default_pass_scheme =\).*/\1 BLF-CRYPT/" ../dovecot-sql.conf.ext
 echo "password_query = select username, domain, password from users inner join domains on domain_id = domains.id where username = '%n' and domain = '%d'
 user_query = select '$VMAIL_DIR' as home" >> ../dovecot-sql.conf.ext
+unset CERT_PATH PASSWORD VMAIL_DIR VMAIL_GID VMAIL_UID 
 systemctl restart postfix dovecot

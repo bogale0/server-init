@@ -1,10 +1,10 @@
 if [ -z $1 ]; then
     echo "Enter server ip address"
-    return
+    return 1
 fi
 CONNECTION=root@$1
 cd ~/.ssh
-cat tmp.pub server.pub | ssh $CONNECTION "cat > .ssh/authorized_keys" || return
+cat tmp.pub server.pub | ssh $CONNECTION "cat > .ssh/authorized_keys" || return 1
 cd ~/server
 tar -chzf init.tar.gz data secret
 scp init.tar.gz $CONNECTION:

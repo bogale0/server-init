@@ -3,10 +3,10 @@ mkdir backup
 mariadb-backup-db tcloud > backup/db.sql
 cp -r storage backup
 tcloud upload backup backup/tcloud/$(date -I)
-tar czf backup.tar.gz backup
+tar -cf backup.tar.zst --zstd backup
 openssl rand -out backup.enc 16
-openssl enc -aes-256-cbc -in backup.tar.gz -K $(xxd -p -c 32 ~/.tcloud/key) -iv $(xxd -p backup.enc) >> backup.enc
-rm -r backup backup.tar.gz
+openssl enc -aes-256-cbc -in backup.tar.zst -K $(xxd -p -c 32 ~/.tcloud/key) -iv $(xxd -p backup.enc) >> backup.enc
+rm -r backup backup.tar.zst
 GITHUB_TOKEN=$(cat ~/secret/github)
 export $(curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/bogale0/Tcloud/releases/latest |
 php -r '$res = json_decode(file_get_contents("php://stdin"), true);

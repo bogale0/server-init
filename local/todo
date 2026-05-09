@@ -2,3 +2,4 @@
 - tcloud integration
 - make target for ip only with no domain
 - change gunzip to zstd where possible
+- switch to postgresql

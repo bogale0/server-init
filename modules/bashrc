@@ -61,30 +61,5 @@ mariadb-create-user() {
     mariadb -e "create database if not exists $NAME;
     create user $NAME@localhost identified by '$PASSWORD';
     grant $PRIVILEGES on $NAME.* to $NAME@localhost;" || return 1
-    cd ~/secret
-    sed -i "/^$NAME:/d" mariadb.users
-    echo "$NAME:$PASSWORD" >> mariadb.users
     echo $PASSWORD
-}
-
-mail-create-user() {
-    if [ -z $1 ]; then
-        echo "mail-create-user <user>@<domain> => <password>"
-        return 1
-    fi
-    local USERNAME=${1%@*}
-    local DOMAINNAME=${1#*@}
-    domain-get-id() {
-        mariadb -N -B -e "select id from mail.domains where domain = '$1'"
-    }
-    local ID=$(domain-get-id $DOMAINNAME)
-    if [ -z $ID ]; then
-        mariadb -e "insert into mail.domains values (null, '$DOMAINNAME')"
-        ID=$(domain-get-id $DOMAINNAME)
-    fi
-    local PASSWORD=$(password-gen)
-    echo "Password for $1: $PASSWORD"
-    PASSWORD=$(doveadm pw -p $PASSWORD -s BLF-CRYPT)
-    mariadb -e "insert into mail.users values (null, '$USERNAME', '${PASSWORD#*\}}', $ID)"
-    unset -f domain-get-id
 }

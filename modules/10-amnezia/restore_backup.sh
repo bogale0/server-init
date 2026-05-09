@@ -1,4 +1,4 @@
-tcloud download backup/vpnconf/$BACKUP_DATE ~/vpnconf-backup || exit 1
+tcloud download backup/vpnconf/$BACKUP_DATE ~/vpnconf-backup || return 1
 docker stop amnezia-awg
 cd -P ~/amnezia-conf/..
 rm -r awg
